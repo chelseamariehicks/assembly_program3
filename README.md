@@ -1,0 +1,2 @@
+# assembly_program3
+Program repeatedly prompts user to enter a number within the specified ranges of -88, -55 or -40, -1 (inclusive) and counts and accumulates the validated user numbers until a non-negative number is entered, which is detected via the sign flag. Program calculates and displays data including: the number of validated numbers entered, the sum of negative numbers entered, the maximum valid value entered, the minimum valid value entered, and the rounded integer average of the valid numbers entered.
