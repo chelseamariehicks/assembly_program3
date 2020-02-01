@@ -35,16 +35,23 @@ instruc1	BYTE	"Please enter numbers in [-88, -55] or [-40, -1].", 0
 instruc2	BYTE	"Enter a non-negative number when you are finished "
 			BYTE	"to see the results of the Integer Accumulator!", 0
 numPrompt	BYTE	"Enter a number: ", 0
+countMsg	BYTE	"The amount of valid numbers entered is ", 0
+maxMsg		BYTE	"The maximum valid number is ", 0
+minMsg		BYTE	"The minimum valid number is ", 0
+sumMsg		BYTE	"The sum of the valid numbers is ", 0
+avgMsg		BYTE	"The rounded average is ", 0
+
 errMsg		BYTE	"Invalid entry! Numbers in [-88, -55] or [-40, -1] only!", 0
+zeroMsg		BYTE	"No valid numbers were entered! There's nothing to see here!", 0
 closing		BYTE	"Farewell my mathematical friend, ", 0
 
 ;variables for user input and loop operation
 userName	BYTE	36 DUP(0)			;store the user's name
 count		DWORD	0					;counter for valid numbers entered
-accum		SDWORD	0					;accumulator for negative numbers entered
-max			SDWORD	0					;stores maximum value entered by user
+sum			SDWORD	0					;accumulator for negative numbers entered
+max			SDWORD	?					;stores maximum value entered by user
 min			SDWORD	0					;stores minimum value entered by user
-avg			SDWORD	0					;stores the average of the valid numbers entered
+avg			SDWORD	?					;stores the average of the valid numbers entered
 
 ;useful components
 punc		BYTE	".", 0
@@ -93,32 +100,111 @@ getNumbers:
 	mov		edx, OFFSET numPrompt
 	call	WriteString
 	call	ReadInt
-	cmp		eax, LOWER_LIMIT				;check integer < -88
+	cmp		eax, LOWER_LIMIT				;check integer > -88
 	jl		error							;jump to error if less than
 	cmp		eax, UPPER_LIMIT				;check if integer > -1
-	jns		calculate						;jump if not signed to calculations
+	jns		calculate						;jump if not signed, terminate getNumbers
 	cmp		eax, UP_LOW_LIMIT				;check if integer > -55
 	jle		valid
+	cmp		eax, LOW_UP_LIMIT				;check if integer > -40
+	jge		valid							;jump to valid if int > -40	
+	jmp		error							;jump to error, -55 < int < -40 
 
 valid:
 	inc		count							;add one to count of valid numbers entered
-	;add what's in eax to accumulator variable (mov accumulator, eax)
-	;compare what is in maximum to eax, replace if eax > maximum
-	;compare what is in minimum to eax, replace if eax < minimum
+	cmp		count, 1						;check if first valid num to set max and min
+	je		firstNum
+
+validStart:
+	add		sum, eax						;add num to accumulator
+	cmp		eax, max						;check if eax > max 
+	jg		replaceMax						
+
+validCont:
+	cmp		eax, min						;check if eax < min 
+	jl		replaceMin
+
+validFin:
 	jmp		getNumbers						;jump back to getNumbers 
 
+replaceMax:									
+	mov		max, eax						;replace maximum if eax > maximum
+	jmp		validCont						;return to valid loop
+
+replaceMin:
+	mov		min, eax						;replace minimum if eax < minimum
+	jmp		validFin						;return to end of valid loop
+
+firstNum:									;set to max and min to first val entered
+	mov		max, eax
+	mov		min, eax
+	jmp		validStart
 
 error:
 	mov		edx, OFFSET errMsg				;print error message
 	call	WriteString
 	call	Crlf
+	call	Crlf
 	jmp		getNumbers						;return to loop to get more numbers
 
 ;calculate and display data
 calculate:
-	;compute average, divide accumulator by count
-	;display count, sum/accumulator, max, min
-	;add messages ie maxMsg, minMsg to messages section
+	call	Crlf
+	call	Crlf
+	mov		edx, 0							;compute average, divide accumulator by count
+	mov		eax, sum						
+	mov		ebx, count						
+	cmp		ebx, 0							;check that count not equal to 0
+	je		zero							;user didn't enter any numbers
+	cdq										;extend sign bit of EAX into EDX
+	idiv	ebx
+	mov		avg, eax
+
+display:
+	mov		edx, OFFSET countMsg			;display the count
+	call	WriteString
+	mov		eax, count
+	call	WriteInt
+	mov		edx, OFFSET punc
+	call	WriteString
+	call	Crlf
+
+	mov		edx, OFFSET	maxMsg				;display the maximum
+	call	WriteString
+	mov		eax, max
+	call	WriteInt
+	mov		edx, OFFSET punc
+	call	WriteString
+	call	Crlf
+
+	mov		edx, OFFSET	minMsg				;display the minimum
+	call	WriteString
+	mov		eax, min
+	call	WriteInt
+	mov		edx, OFFSET punc
+	call	WriteString
+	call	Crlf
+
+	mov		edx, OFFSET	sumMsg				;display the sum
+	call	WriteString
+	mov		eax, sum
+	call	WriteInt
+	mov		edx, OFFSET punc
+	call	WriteString
+	call	Crlf
+
+	mov		edx, OFFSET	avgMsg				;display the average
+	call	WriteString
+	mov		eax, avg
+	call	WriteInt
+	mov		edx, OFFSET punc
+	call	WriteString
+	call	Crlf
+	jmp		farewell						;jump to parting message
+
+zero:
+	mov		edx, OFFSET	zeroMsg				;print message if no valid num entered
+	call	WriteString
 
 ;bid the user adieu
 farewell:
