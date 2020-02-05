@@ -23,6 +23,7 @@ LOWER_LIMIT		EQU	-88					;defines the lower limit as constant = -88
 UP_LOW_LIMIT	EQU -55					;defines the upper limit of the low range = -55
 LOW_UP_LIMIT	EQU -40					;defines the lower limit of upper range = -40
 UPPER_LIMIT		EQU	-1					;defines upper limit as constant = -1
+ZERO_LIMIT		EQU  0					;defines zero limit as constant = 0 for special case
 
 .data
 
@@ -102,7 +103,7 @@ getNumbers:
 	call	ReadInt
 	cmp		eax, LOWER_LIMIT				;check integer > -88
 	jl		error							;jump to error if less than
-	cmp		eax, UPPER_LIMIT				;check if integer > -1
+	cmp		eax, ZERO_LIMIT					;check if integer > -1, including case of -1 entry
 	jns		calculate						;jump if not signed, terminate getNumbers
 	cmp		eax, UP_LOW_LIMIT				;check if integer > -55
 	jle		valid
